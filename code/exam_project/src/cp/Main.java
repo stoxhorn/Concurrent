@@ -22,26 +22,31 @@ public class Main
     public static String testString = "C:\\Users\\Stoxhorn\\Desktop\\CurrentProjects\\Concurrent\\code\\data_example";
 
     // Method for comparing results
-    public static void compare(List<Result> list)
+    public static void compare(List<PathResultMin> list)
     {
-        List<Result> check = seq(Paths.get(testString));
+        List<PathResultMin> check = seq(Paths.get(testString));
         
-        ListIterator<Result> itr;
+        ListIterator<PathResultMin> itr;
         
         int sameResults = 0;
         
-        for(Result v: check)
+        for(PathResultMin v: check)
         {
             itr = list.listIterator();
+
             while(itr.hasNext())
             {
-                if(v.equals(itr.next()))
+                PathResultMin z = itr.next();
+
+
+                if(equals(v, z))
                 {
                     
                     sameResults ++;
-                    System.out.println("Amount of truths in this world : " + sameResults);
+            
                 }
             }
+            
             
         }        
         int dif = check.size()-sameResults;
@@ -71,13 +76,13 @@ public class Main
     }
     
     // Sequential m1:
-    public static List< Result > seq( Path dir )
+    public static List< PathResultMin > seq( Path dir )
     {
         
         
         
        // Creates the list to be returned
-       List<Result> returnList = new LinkedList();            
+       List<PathResultMin> returnList = new LinkedList();            
 
        // In case the given path is a directory and not a txt file:
        if (Files.isDirectory(dir))
@@ -103,6 +108,26 @@ public class Main
        // If the given path was neither a txt file or directory,
        // this will be empty, and thus cause no chaos
        return returnList;            
+    }
+    
+    public static boolean equals(PathResultMin x, PathResultMin y)
+    {
+     
+        
+        int xNum = x.number();
+        
+        int yNum = y.number();
+        
+        String xStr = x.path().toString();
+        
+        String yStr = y.path().toString();
+        
+        if(xNum != yNum)
+        {
+            return false;
+        }
+        
+        return xStr.equals(yStr);
     }
     
 }

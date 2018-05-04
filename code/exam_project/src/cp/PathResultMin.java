@@ -142,20 +142,6 @@ public class PathResultMin implements Result {
         }
     }
     
-    public boolean equals(Result x)
-    {
-        
-        
-        int z = x.number();
-        
-        String c = x.path().toString();
-        
-        String v = path().toString();
-        
-        if(z != number())
-        {
-            return false;
-        }
-        return c.equals(v);
-    }
+    
+    
 }
