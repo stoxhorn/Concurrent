@@ -19,12 +19,15 @@ public class Main
 
 	public static void main( String[] args )
 	{
+            final long startTime = System.currentTimeMillis();
             List asd = Exam.m1(Paths.get(testString));
             for(Object x : asd)
             {
                 System.out.println(x.toString());
             }
+            final long endTime = System.currentTimeMillis();
             
+            System.out.println(endTime - startTime);
             
             
             
