@@ -65,6 +65,8 @@ public class Exam
             } catch (ExecutionException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
+            long Time = System.currentTimeMillis();
+            //System.out.println("addition takes: " + (Time - startTime));
         }
         final long endTime = System.currentTimeMillis();
         System.out.println("addition takes: " + (endTime - startTime));

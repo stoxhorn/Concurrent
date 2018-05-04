@@ -22,10 +22,10 @@ public class Main
             final long startTime = System.currentTimeMillis();
             List asd = Exam.m1(Paths.get(testString));
             final long endTime = System.currentTimeMillis();
-            for(Object x : asd)
+            /*for(Object x : asd)
             {
                 System.out.println(x.toString());
-            }
+            }*/
             
             
             System.out.println(endTime - startTime);
