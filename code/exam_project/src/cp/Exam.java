@@ -5,8 +5,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -16,7 +25,49 @@ public class Exam
 {
     // an executor that is used for all the curent methods
     // as only one executor should be running at a time
-    static ExecutorService Service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    static ScheduledThreadPoolExecutor Serv = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
+    
+    static ConcurrentLinkedDeque<Future<Result>> m1Fut = new ConcurrentLinkedDeque<>();
+    
+    static LinkedList<Result> m1List = new LinkedList<>();
+    
+    static AtomicInteger m1Int = new AtomicInteger();
+    
+    static CountDownLatch m1Latch = new CountDownLatch(0);
+    
+    
+    
+    
+    
+    private static int decrementM1()
+    {
+        int x = m1Int.decrementAndGet();
+        return x;
+    }
+    
+    private static  int incrementM1()
+    {
+        int x = m1Int.incrementAndGet();
+        return x;
+    }
+    
+    public static void add()
+    {
+        Serv.shutdown();
+        
+        
+        for(Future<Result> x : m1Fut)
+        {
+            try {
+                m1List.add(x.get());
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+                
+    }
     
     
     
@@ -49,36 +100,54 @@ public class Exam
     */
     public static List< Result > m1( Path dir )
     {
-        
-        
-        
-       // Creates the list to be returned
-       List<Result> returnList = new LinkedList();            
+       
+         // Creates the list to be returned
+        List<Result> returnList = new LinkedList();            
+       
+        // Integer to keep track of call number
+        int callBlock = incrementM1();
+       
+        // In case the given path is a txt file and not a directory:
+        if(dir.toString().toLowerCase().endsWith(".txt"))
+        {
+            // Adds a PathResultMin for the given file to the future list
+            m1Fut.add(Serv.submit(() -> new PathResultMin(dir)));
+        }  
+       
+        // In case the given path is a directory and not a txt file:
+        else if (Files.isDirectory(dir))
+        {    
+            // Creates an array of Files, representing the files in the given irectory
+            File[] dirFiles = dir.toFile().listFiles();
 
-       // In case the given path is a directory and not a txt file:
-       if (Files.isDirectory(dir))
-       {    
-           // Creates an array of Files, representing the files in the given irectory
-           File[] dirFiles = dir.toFile().listFiles();
+            // Loops through each file, and calls this method upon the loop
+            for(File file : dirFiles)
+            {
+               incrementM1();
+               // add to files 
+               m1(file.toPath());
+            
+            }
+        }
+       
+       
 
-           // Loops through each file, and calls this method upon the loop
-           for(File file : dirFiles)
-           {
-               returnList.addAll(m1(file.toPath()));
-           }
-       }
-
-       // In case the given path is a txt file and not a directory:
-       else if(dir.toString().toLowerCase().endsWith(".txt"))
-       {
-           // Adds a PathResultMin for the given file to the lsit
-           returnList.add(new PathResultMin(dir));
-       } 
-
-       // Returns the build List
-       // If the given path was neither a txt file or directory,
-       // this will be empty, and thus cause no chaos
-       return returnList;            
+        // Returns the build List
+        // If the given path was neither a txt file or directory,
+        // this will be empty, and thus cause no chaos
+       
+        // if this is first call, return the list of futures
+        if(callBlock == 1)
+        {
+            // Start the creation
+            add();
+            return m1List;
+        }
+        else
+        {
+            
+        }
+        return null;
     }
 
     
