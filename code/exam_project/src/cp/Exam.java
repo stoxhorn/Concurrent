@@ -5,14 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 
@@ -20,16 +14,9 @@ import java.util.logging.Logger;
  */
 public class Exam
 {
-    static ExecutorService Serv = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); 
-    static ConcurrentLinkedDeque<Future<Result>> m1List = new ConcurrentLinkedDeque<>();
-    
-    static AtomicInteger m1Int = new AtomicInteger();
-    
-    private static Result calcResult(Path dir)
-    {
-        return new PathResultMin(dir);
-    }
-    
+    // an executor that is used for all the curent methods
+    // as only one executor should be running at a time
+    static ExecutorService Service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     
     
     
@@ -62,7 +49,9 @@ public class Exam
     */
     public static List< Result > m1( Path dir )
     {
-        m1Int.addAndGet(1);
+        
+        
+        
        // Creates the list to be returned
        List<Result> returnList = new LinkedList();            
 
@@ -75,8 +64,7 @@ public class Exam
            // Loops through each file, and calls this method upon the loop
            for(File file : dirFiles)
            {
-               System.out.println("shit");
-               m1(file.toPath());
+               returnList.addAll(m1(file.toPath()));
            }
        }
 
@@ -84,48 +72,15 @@ public class Exam
        else if(dir.toString().toLowerCase().endsWith(".txt"))
        {
            // Adds a PathResultMin for the given file to the lsit
-           m1List.add(Serv.submit(()-> calcResult(dir)));
+           returnList.add(new PathResultMin(dir));
        } 
 
-       if(m1Int.decrementAndGet()==1)
-       {
-           returnList = consume1();
-       }
-       
+       // Returns the build List
+       // If the given path was neither a txt file or directory,
+       // this will be empty, and thus cause no chaos
        return returnList;            
     }
 
-    private static List<Result> consume1() {
-        LinkedList<Result> returnList = new LinkedList<>();
-        boolean bol = true;
-        while(bol)
-        {
-            System.out.println(m1Int.get());
-            System.out.println("asd");
-            
-            try {
-                //System.out.println(m1List.peekFirst().get().path());
-                returnList.add(m1List.pollFirst().get());
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
-                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            catch(NullPointerException e)
-            {
-                Thread.sleep(100);
-                if(m1List.isEmpty())
-                {
-                    System.out.println("nuked");
-                    bol = false;
-                }
-            }
-            
-        }
-            
-        return returnList;
-    }
-    
     
     /**
      * This method recursively visits a directory for text files with suffix
@@ -197,6 +152,4 @@ public class Exam
     {
             throw new UnsupportedOperationException();
     }
-
-    
 }
