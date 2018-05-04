@@ -21,11 +21,12 @@ public class Main
 	{
             final long startTime = System.currentTimeMillis();
             List asd = Exam.m1(Paths.get(testString));
+            final long endTime = System.currentTimeMillis();
             for(Object x : asd)
             {
                 System.out.println(x.toString());
             }
-            final long endTime = System.currentTimeMillis();
+            
             
             System.out.println(endTime - startTime);
             
