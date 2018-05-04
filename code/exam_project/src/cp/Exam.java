@@ -55,7 +55,7 @@ public class Exam
     {
         Serv.shutdown();
         
-        final long startTime = System.currentTimeMillis();
+        
         for(Future<Result> x : m1Fut)
         {
             try {
@@ -65,11 +65,9 @@ public class Exam
             } catch (ExecutionException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
-            long Time = System.currentTimeMillis();
-            //System.out.println("addition takes: " + (Time - startTime));
+            
+            
         }
-        final long endTime = System.currentTimeMillis();
-        System.out.println("addition takes: " + (endTime - startTime));
                 
     }
     
