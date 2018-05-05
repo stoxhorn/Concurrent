@@ -53,26 +53,21 @@ public class Exam
     
     public static void add()
     {
-        
+        Serv.shutdown();
         
         
         for(Future<Result> x : m1Fut)
         {
-            
-                Serv.execute(()-> {
-                    try {
-                        m1List.add(x.get());
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (ExecutionException ex) {
-                        Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                });
-            
+            try {
+                m1List.add(x.get());
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
             
             
         }
-        Serv.shutdown();
                 
     }
     
@@ -85,7 +80,7 @@ public class Exam
     * You must consider only files ending with a ".txt" suffix.
     * You are guaranteed that they will be text files.
     * 
-    * System.out.println();You can assume that each text file contains a (non-empty)
+    * You can assume that each text file contains a (non-empty)
     * comma-separated sequence of
     * numbers. For example: 100,200,34,25
     * There won't be any new lines, spaces, etc., and the sequence never
