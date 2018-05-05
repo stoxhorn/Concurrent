@@ -21,10 +21,20 @@ public class Main
 {
     public static String testString = "C:\\Users\\Stoxhorn\\Desktop\\CurrentProjects\\Concurrent\\code\\data_example";
 
+    static long startTime = System.currentTimeMillis();;
+    
+    static long endTime = System.currentTimeMillis();;
+            
     // Method for comparing results
     public static void compare(List<PathResultMin> list)
     {
+        
+        
+        
         List<PathResultMin> check = seq(Paths.get(testString));
+        
+        
+        
         
         ListIterator<PathResultMin> itr;
         
@@ -59,16 +69,18 @@ public class Main
     
     public static void main( String[] args )
     {
-        final long startTime = System.currentTimeMillis();
-        List asd = Exam.m1(Paths.get(testString));
-        final long endTime = System.currentTimeMillis();
+        
         /*for(Object x : asd)
         {
             System.out.println(x.toString());
         }*/
-        System.out.println(endTime - startTime);
+        startTime = System.currentTimeMillis();
+        List list = Exam.m1(Paths.get(testString));
+        endTime = System.currentTimeMillis();
+        System.out.println("concurrent: " + (endTime - startTime));
         
-        compare(asd);
+        
+        compare(list);
         
 
 
