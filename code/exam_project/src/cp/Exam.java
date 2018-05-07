@@ -3,16 +3,20 @@ package cp;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,9 +29,11 @@ public class Exam
 {
     // an executor that is used for all the curent methods
     // as only one executor should be running at a time
-    static ScheduledThreadPoolExecutor Serv = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
+    static ForkJoinPool Serv = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
     
-    static ConcurrentLinkedDeque<Future<Result>> m1Fut = new ConcurrentLinkedDeque<>();
+    static ExecutorCompletionService<List<Result>> Results = new ExecutorCompletionService(Serv);
+    
+    static ConcurrentLinkedDeque<Future<Result>> sults = new ConcurrentLinkedDeque<>();
     
     static LinkedList<Result> m1List = new LinkedList<>();
     
@@ -54,20 +60,43 @@ public class Exam
     public static void add()
     {
         
-        
-        
-        for(Future<Result> x : m1Fut)
+        boolean asd = true;
+        int v = 0;
+        while(true)
         {
-            Serv.execute(() -> {
+            
+            try {
+                
+                List<Result> tmp;
                 try {
-                    m1List.add(x.get());
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+                    
+                    tmp = Results.take().get();
+                    
+                    if(tmp == null)
+                    {
+                        System.out.println(m1List.size());
+                    }else
+                    {
+                        v++;
+                        m1List.addAll(tmp);
+                        if(v == m1Int.get()-1)
+                        {
+                            break;
+                        }
+                        
+                    }
+                    
+                    
                 } catch (ExecutionException ex) {
                     Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            });
+
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
         }
+        Serv.shutdown();
     }
     
     
@@ -105,31 +134,43 @@ public class Exam
          // Creates the list to be returned
         List<Result> returnList = new LinkedList();            
        
+        int callBlock = 0;
+        
         // Integer to keep track of call number
-        int callBlock = incrementM1();
+        if(m1Int.get() == 0)
+        {
+            callBlock = incrementM1();
+        }
+        
        
         // In case the given path is a txt file and not a directory:
-        if(dir.toString().toLowerCase().endsWith(".txt"))
-        {
-            // Adds a PathResultMin for the given file to the future list
-            m1Fut.add(Serv.submit(() -> new PathResultMin(dir)));
-        }  
-       
-        // In case the given path is a directory and not a txt file:
-        else if (Files.isDirectory(dir))
-        {    
-            // Creates an array of Files, representing the files in the given irectory
-            File[] dirFiles = dir.toFile().listFiles();
+        
+        
+        // Creates an array of Files, representing the files in the given irectory
+        File[] dirFiles = dir.toFile().listFiles();
 
-            // Loops through each file, and calls this method upon the loop
-            for(File file : dirFiles)
+        // Loops through each file, and calls this method upon the loop
+        for(File file : dirFiles)
+        {
+            String x = file.getAbsolutePath();
+            if(x.toLowerCase().endsWith(".txt"))
             {
-               incrementM1();
-               // add to files 
-               m1(file.toPath());
-            
+                returnList.add(new PathResultMin(Paths.get(x)));
+            }  
+            else if(file.isDirectory())
+            {
+                // add to files
+                incrementM1();
+                Results.submit(() -> {
+                    return m1(file.toPath());
+                });
             }
+
+
+
+
         }
+        
        
        
 
@@ -141,14 +182,14 @@ public class Exam
         if(callBlock == 1)
         {
             // Start the creation
+            m1List.addAll(returnList);
             add();
             return m1List;
         }
         else
         {
-            
+            return returnList;
         }
-        return null;
     }
 
     
