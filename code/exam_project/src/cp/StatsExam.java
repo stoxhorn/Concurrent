@@ -7,6 +7,7 @@ package cp;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import static java.util.EnumSet.copyOf;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -21,17 +22,23 @@ import java.util.stream.IntStream;
  */
 public class StatsExam implements Stats
 {
-    //contains the index of most frequent number 
+    
+    // index of the most frequent number
     int mostFrequent = -1;
     
+    // index of the lease frequent number
     int leastFrequent = -1;
     
+    // The list of occurrences, with the index corresponding to the index of occured
     private ArrayList<Integer> occurences = new ArrayList();
     
+    // The list of occured numbers, with their index linked to a number of occurences
     private ArrayList<Integer> occured = new ArrayList();
     
+    // A list of paths 
     private List<statNode> paths = new ArrayList();
     
+    // constructor
     public StatsExam()
     {
         
@@ -47,11 +54,14 @@ public class StatsExam implements Stats
     
     public void calcOcc()
     {
-        // for each occureance:
+        // for each occureance loops, and checks if higher og lower than previous storage of frquencies
         for(int occ : occured)
         {
-            
-            int index = occured.indexOf(occ);
+            int index = 0;
+            while(occured.get(index)!= occ)
+            {
+                index ++;
+            }
             
             // If first occurance:        
             if(mostFrequent == -1)
@@ -72,15 +82,14 @@ public class StatsExam implements Stats
             else if(occ < occurences.get(leastFrequent))
             {
                 mostFrequent = index;
-            }
+            }    
         }
-            
-    
     }
         
     
     
     
+    // sets the occurency lists
     private void setOcc(ArrayList<ArrayList<Integer>> Occurences)
     {
         occurences = Occurences.get(0);
@@ -90,7 +99,7 @@ public class StatsExam implements Stats
     
     
     
-    // The stream will bne needed for each node, as i need to go through each number from the path
+    // Takes a stream of numbers and adds the proper set of occurenies and occured numbers
     public void calcOcc(IntStream Stream)
     {
         
@@ -100,6 +109,7 @@ public class StatsExam implements Stats
     }
         
     
+    // adds the right occurence from a given numbere
     private ArrayList<ArrayList<Integer>> addOneOcc(Integer x)
     {
         ArrayList<ArrayList<Integer>> returnArr3 = new ArrayList<>();
@@ -134,26 +144,15 @@ public class StatsExam implements Stats
         return returnArr3;
     }
     
-    
+    // Takes a list of paths and sets the paths of this object to be the same
     public void setPaths(List<statNode> list)
     {
-        paths = list;
-        printOcc();
-        System.out.println(this.mostFrequent());
-        System.out.println(this.leastFrequent());
-        System.out.println(this.paths);
+        List<statNode> tmp = list;
+        paths = tmp;
     }
     
-    public String toString()
-    {
-        String ret = "";
-        for(statNode x: paths)
-        {
-            
-        }
-    }
-    
-    
+   
+    // Prints the occurences, the lowest and thehighest frequency at least
     public void printOcc()
     {
         System.out.println("aouihjsdojuikhnas");
@@ -181,7 +180,7 @@ public class StatsExam implements Stats
 
     
     
-    
+    // returns the nubmer of of the given number
     @Override
     public int occurrences(int number) {
         int y = 0;
@@ -196,12 +195,14 @@ public class StatsExam implements Stats
         return 0;
     }
 
+    // returns the most number of the most frquently occurred number
     @Override
     public int mostFrequent() {
         int tmp = mostFrequent;
         return tmp;
     }
-
+    
+    // returns the most number of the least frquently occurred number
     @Override
     public int leastFrequent() {
         int tmp = mostFrequent;
@@ -217,15 +218,6 @@ public class StatsExam implements Stats
         }
         
         return tmp;
-    }
-    
-    
-
-    private void setSum(Path dir)
-    {
-        
-        
-        
     }
     
 }
