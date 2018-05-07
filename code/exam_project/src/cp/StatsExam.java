@@ -44,14 +44,9 @@ public class StatsExam implements Stats
         
     }
             
-            
-    
-    public void add(Path dir)
-    {
-
-    }
-    
-    
+    /**
+     * Goes through the stored lists of occured and occurences sets the mostFrequent and lest Frequent variables
+     */
     public void calcOcc()
     {
         // for each occureance loops, and checks if higher og lower than previous storage of frquencies
@@ -89,7 +84,11 @@ public class StatsExam implements Stats
     
     
     
-    // sets the occurency lists
+    
+    /**
+     * sets the occurency lists
+     * @param Occurences 
+     */
     private void setOcc(ArrayList<ArrayList<Integer>> Occurences)
     {
         occurences = Occurences.get(0);
@@ -99,7 +98,11 @@ public class StatsExam implements Stats
     
     
     
-    // Takes a stream of numbers and adds the proper set of occurenies and occured numbers
+    
+    /**
+     * Takes a stream of numbers and adds the proper set of occurenies and occured numbers
+     * @param Stream 
+     */
     public void calcOcc(IntStream Stream)
     {
         
@@ -109,7 +112,12 @@ public class StatsExam implements Stats
     }
         
     
-    // adds the right occurence from a given numbere
+    
+    /**
+     * adds the right occurence from a given numbere
+     * @param x
+     * @return 
+     */
     private ArrayList<ArrayList<Integer>> addOneOcc(Integer x)
     {
         ArrayList<ArrayList<Integer>> returnArr3 = new ArrayList<>();
@@ -144,7 +152,11 @@ public class StatsExam implements Stats
         return returnArr3;
     }
     
-    // Takes a list of paths and sets the paths of this object to be the same
+    
+    /**
+     * Takes a list of paths and sets the paths of this object to be the same
+     * @param list 
+     */
     public void setPaths(List<statNode> list)
     {
         List<statNode> tmp = list;
@@ -152,7 +164,10 @@ public class StatsExam implements Stats
     }
     
    
-    // Prints the occurences, the lowest and thehighest frequency at least
+    
+    /**
+     * Prints the occurences, the lowest and thehighest frequency at least
+     */
     public void printOcc()
     {
         System.out.println("aouihjsdojuikhnas");
@@ -180,7 +195,7 @@ public class StatsExam implements Stats
 
     
     
-    // returns the nubmer of of the given number
+    
     @Override
     public int occurrences(int number) {
         int y = 0;
@@ -195,14 +210,14 @@ public class StatsExam implements Stats
         return 0;
     }
 
-    // returns the most number of the most frquently occurred number
+    
     @Override
     public int mostFrequent() {
         int tmp = mostFrequent;
         return tmp;
     }
     
-    // returns the most number of the least frquently occurred number
+    
     @Override
     public int leastFrequent() {
         int tmp = mostFrequent;

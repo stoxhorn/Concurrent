@@ -86,7 +86,10 @@ public class Exam
     
     
 
-    // The final method that sequantially waits for the results of Result1 to finish
+    
+    /**
+     * The final method that sequantially waits for the results of Result1 to finish
+     */
     public static void add()
     {
         Future<Result> tmp = Results1.poll();
@@ -193,7 +196,10 @@ public class Exam
     //------------------------------------------------- helper Methods for second method
     
     
-    // the call used every loop once, the method wants to calculates it's return
+   
+    /**
+     * the call used every loop once, the method wants to calculates it's return
+     */
     public static void add2One()
     {
         Future<Result> tmp = Results2.poll();
@@ -314,7 +320,9 @@ public class Exam
     
     
     
-    // the method used in the add3() loop, to complete futures
+    /**
+     *  the method used in the add3() loop, to complete futures
+     */
     private static void add3One()
     {
         
@@ -351,8 +359,10 @@ public class Exam
         
     }
     
-    // a loop that gives the executor runnables to complete
-    // will when the submission count growth is faster than it can compute, meaning it's waiting for tasks
+    /**
+     * a loop that gives the executor runnables to complete
+     * will when the submission count growth is faster than it can compute, meaning it's waiting for futures from the TaskPool
+     */
     public static void add3()
     {
         while(Serv.getQueuedSubmissionCount() <100)
@@ -367,6 +377,11 @@ public class Exam
         locals.setPaths(temp);
         
     }
+    /**
+     * takes a list of statnodes and adds the occurrences of the list to the StatsExam of this object, through an integerStream
+     * @param list A list of game nodes to add occuirrences from
+     * @return 
+     */
     
     public static ArrayList<statNode> addNodes(List<statNode> list)
     {
@@ -379,11 +394,16 @@ public class Exam
             locals.calcOcc();
             strim.close();
         }
-        
         return addNode(list);
-        
     }
     
+    
+    /**
+     * Method that was supposed to put the old list in order, such that the loest index also holds the lowest sum
+     * does not work though, does get called, in case it would be fixed in the future
+     * @param old 
+     * @return 
+     */
     public static ArrayList<statNode> addNode(List<statNode> old)
     {
         ArrayList<statNode> newb = new ArrayList<statNode>();
@@ -429,6 +449,12 @@ public class Exam
         return newb;
     }
     
+    /**
+     * a suppsed helper method for a non working method 
+     * @param list
+     * @param x
+     * @return 
+     */
     private static boolean contains(List<Integer> list, int x)
     {
         for(int z : list)
@@ -453,35 +479,45 @@ public class Exam
      */
     public static Stats m3( Path dir )
     {
+        // variable for detecting depth
         int local = incrementM3();
         File[] dirFiles = dir.toFile().listFiles();
         
+        // initializes executor and completionistservice
         if(local == 1)
         {
             Serv = new ForkJoinPool();
             Results3 = new ExecutorCompletionService(Serv);
         }
         
+        // Goes through every fule with recursive calls, and adds the .dat files an .txt files to the completionservice
         for(File x : dirFiles)
         {
             String tmp = x.getAbsolutePath();
             if(tmp.toLowerCase().endsWith(".txt") || tmp.toLowerCase().endsWith(".dat"))
             {
-                // I shubmit a result to the completion service
+                // Submit to Completion service
                 Results3.submit(() -> {
                     return getNode(Paths.get(tmp));
                 });
             }
+            
+            // recursive call
             else if(x.isDirectory())
             {
                 m3(Paths.get(tmp));
             }   
         }
+        
+        // block for the first depth to return with
         if(local == 1)
         {
+            
             // I start the method that gets the current futures
             Serv.execute(() -> add3());
             try {
+                
+                // and awaits its work to be done
                 m3Latch.await();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
@@ -492,40 +528,15 @@ public class Exam
         return null;
     }
     
-    // each time i meet a txdt/ dat file i need to run following sequence:
-    /*
-        with only a list of paths, i am now able to create a list of statNodes without proper indexing
-        this can be achieved in it's local methods using calcOcc on for each path traversed
-        
-    idea:
-        i make a fuckton of statNodes, and at the end i add them to statsExam
-    
-    */
-    
-    // Takes a list of directories, and spits out a list of gamenodes without proper indexing
-    private static List<statNode> getNodes(List<Path> dirs)
-    {
-        ArrayList<statNode> tmp = new ArrayList<>();
-        for(Path x : dirs)
-        {
-            tmp.add(getNode(x));
-        }
-        
-        ArrayList<statNode> temp = new ArrayList<>();
-        int y = 0;
-        for(statNode x : tmp)
-        {
-            x.setInd(y);
-            y++;
-            temp.add(x);   
-        }
-        
-        return temp;
-        
-    }
+
+
     
     
-    // Takes a path, and a list of Nodes. and returns a list with one new Node
+    /**
+     * Takes a path and returns a node representing this path, used to submit to completion service for futures
+     * @param dir
+     * @return 
+     */
     private static statNode getNode(Path dir)
     {
         IntStream loco;

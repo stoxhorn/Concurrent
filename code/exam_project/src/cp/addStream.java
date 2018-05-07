@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 /**
  *
- * @author Stoxhorn
+ * An extra class to easily create the needed streams fro ma path, used across 2 different classes
  */
 public class addStream {
      // Takes a path and returns an intstream

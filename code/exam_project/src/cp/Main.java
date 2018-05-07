@@ -86,11 +86,11 @@ public class Main
         
         compare(list);*/
         startTime = System.currentTimeMillis();
-        Result res = Exam.m2(Paths.get(testString), 1000);
+        Stats res = Exam.m3(Paths.get(testString));
         endTime = System.currentTimeMillis();
         
         
-        System.out.println(res);
+        
         System.out.println("concurrent: " + (endTime - startTime));
         
 
