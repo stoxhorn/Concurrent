@@ -186,7 +186,6 @@ public class Exam
                 {
                     m2Return = tmp.get();
                     m2Latch.countDown();
-                    return;
                 }
             } catch (InterruptedException | ExecutionException | NullPointerException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
