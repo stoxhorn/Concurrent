@@ -4,6 +4,7 @@ import static cp.Main.startTime;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -281,7 +282,7 @@ public class Exam
     }
 
 	
-    /**
+      /**
      * Computes overall statistics about the occurrences of numbers in a directory.
      * 
      * This method recursively searches the directory for all numbers in all lines of .txt and .dat files and returns
@@ -290,6 +291,23 @@ public class Exam
      */
     public static Stats m3( Path dir )
     {
-            throw new UnsupportedOperationException();
+        File[] dirFiles = dir.toFile().listFiles();
+
+       for(File x : dirFiles)
+       {
+        String tmp = x.getAbsolutePath();
+        if(tmp.toLowerCase().endsWith(".txt") || tmp.toLowerCase().endsWith(".dat"))
+        {
+            locals.add(Paths.get(tmp));
+        }
+        else if(x.isDirectory())
+        {
+            m3(Paths.get(tmp));
+        }   
+       }
+        
+    
+            
+        return locals;
     }
 }
