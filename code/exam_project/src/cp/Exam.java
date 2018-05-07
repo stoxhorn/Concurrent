@@ -3,14 +3,12 @@ package cp;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,8 +26,6 @@ public class Exam
     // an executor that is used for all the curent methods
     // as only one executor should be running at a time
     static ScheduledThreadPoolExecutor Serv = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
-    
-    static ExecutorCompletionService<Result> Results = new ExecutorCompletionService(Serv);
     
     static ConcurrentLinkedDeque<Future<Result>> m1Fut = new ConcurrentLinkedDeque<>();
     
@@ -55,35 +51,23 @@ public class Exam
         return x;
     }
     
-    private static void addOne()
+    public static void add()
     {
-
-        try {
-            Result x;
+        Serv.shutdown();
+        
+        
+        for(Future<Result> x : m1Fut)
+        {
             try {
-                x = Results.take().get();
-                m1List.add(x);
+                m1List.add(x.get());
             } catch (InterruptedException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-        } catch (ExecutionException ex) {
-            Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            
         }
-
-    }
-    
-    public static void add()
-    {
-        while(true)
-        {
-            Serv.execute(() -> addOne());
-            if(m1List.size() == m1Int.get()-1)
-            {
-                break;
-            }
-        }
-        System.out.println(Serv.isShutdown());
                 
     }
     
@@ -118,26 +102,18 @@ public class Exam
     */
     public static List< Result > m1( Path dir )
     {
-        System.out.println("m1 Call");
+       
          // Creates the list to be returned
         List<Result> returnList = new LinkedList();            
-        int callBlock = 0;
-        if(!(m1Int.get() > 0))
-        {
-            callBlock = 1;
-            incrementM1();
-        }
-        
-        System.out.println(callBlock);
-
        
-        
-        
+        // Integer to keep track of call number
+        int callBlock = incrementM1();
+       
         // In case the given path is a txt file and not a directory:
         if(dir.toString().toLowerCase().endsWith(".txt"))
         {
             // Adds a PathResultMin for the given file to the future list
-            
+            m1Fut.add(Serv.submit(() -> new PathResultMin(dir)));
         }  
        
         // In case the given path is a directory and not a txt file:
@@ -149,16 +125,10 @@ public class Exam
             // Loops through each file, and calls this method upon the loop
             for(File file : dirFiles)
             {
-               String x = file.getAbsolutePath();
-                if(x.toLowerCase().endsWith(".txt"))
-                {
-                    System.out.println(incrementM1());
-                    Results.submit(() -> new PathResultMin(Paths.get(x)));
-                }else if(file.isDirectory())
-                {
-
-                    m1(file.toPath());
-                }
+               incrementM1();
+               // add to files 
+               m1(file.toPath());
+            
             }
         }
        
@@ -172,9 +142,7 @@ public class Exam
         if(callBlock == 1)
         {
             // Start the creation
-            System.out.println("asd");
             add();
-            System.out.println("asd");
             return m1List;
         }
         else
