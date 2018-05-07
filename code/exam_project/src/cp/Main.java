@@ -78,7 +78,7 @@ public class Main
         List list = Exam.m1(Paths.get(testString));
         endTime = System.currentTimeMillis();
         System.out.println("concurrent: " + (endTime - startTime));
-        
+        System.out.println(list.size());
         
         compare(list);
         
