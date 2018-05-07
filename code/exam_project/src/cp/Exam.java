@@ -53,22 +53,21 @@ public class Exam
     
     public static void add()
     {
-        Serv.shutdown();
+        
         
         
         for(Future<Result> x : m1Fut)
         {
-            try {
-                m1List.add(x.get());
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
-                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            
+            Serv.execute(() -> {
+                try {
+                    m1List.add(x.get());
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
         }
-                
     }
     
     
