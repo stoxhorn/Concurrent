@@ -6,12 +6,14 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -25,9 +27,9 @@ public class Exam
 {
     // an executor that is used for all the curent methods
     // as only one executor should be running at a time
-    static ScheduledThreadPoolExecutor Serv = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
+    static ScheduledThreadPoolExecutor Serv = new ScheduledThreadPoolExecutor(3);//Runtime.getRuntime().availableProcessors()
     
-    static ConcurrentLinkedDeque<Future<Result>> m1Fut = new ConcurrentLinkedDeque<>();
+    static ConcurrentLinkedDeque<FutureTask<Result>> m1Fut = new ConcurrentLinkedDeque<>();
     
     static LinkedList<Result> m1List = new LinkedList<>();
     
@@ -51,13 +53,27 @@ public class Exam
         return x;
     }
     
+
+    
     public static void add()
     {
-        Serv.shutdown();
-        
         
         for(Future<Result> x : m1Fut)
         {
+            x = m1Fut.pollFirst();
+            Serv.execute(x.get());
+            
+            Serv.execute(() -> {
+                try {
+                    m1List.add(x.get());
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        }
+        while(m1Fut.size() > m1List.size())
+        {
+            Future<Result> x = m1Fut.pollLast();
             try {
                 m1List.add(x.get());
             } catch (InterruptedException ex) {
@@ -65,10 +81,7 @@ public class Exam
             } catch (ExecutionException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-            
         }
-                
     }
     
     
@@ -113,7 +126,7 @@ public class Exam
         if(dir.toString().toLowerCase().endsWith(".txt"))
         {
             // Adds a PathResultMin for the given file to the future list
-            m1Fut.add(Serv.submit(() -> new PathResultMin(dir)));
+            m1Fut.add(() -> {return new PathResultMin(dir));;
         }  
        
         // In case the given path is a directory and not a txt file:
@@ -143,6 +156,12 @@ public class Exam
         {
             // Start the creation
             add();
+            while(Serv.getQueue().size() > 0)
+            {
+            }
+            while(m1List.size() < m1Fut.size())
+            {
+            }
             return m1List;
         }
         else
