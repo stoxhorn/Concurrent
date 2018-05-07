@@ -1,5 +1,7 @@
 package cp;
 
+
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,10 +61,18 @@ public class Exam
     {
 
         try {
-            Result x;
+            Future<Result> x;
             try {
-                x = Results.take().get();
-                m1List.add(x);
+                x = Results.take();
+                if(x.get() == null)
+                {
+                    System.out.println(m1List.size());
+                    m1Latch.countDown();
+                }else
+                {
+                    m1List.add(x.get());
+                }
+                
             } catch (InterruptedException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -78,13 +88,7 @@ public class Exam
         while(true)
         {
             Serv.execute(() -> addOne());
-            if(m1List.size() == m1Int.get()-1)
-            {
-                break;
-            }
         }
-        System.out.println(Serv.isShutdown());
-                
     }
     
     
@@ -118,7 +122,6 @@ public class Exam
     */
     public static List< Result > m1( Path dir )
     {
-        System.out.println("m1 Call");
          // Creates the list to be returned
         List<Result> returnList = new LinkedList();            
         int callBlock = 0;
@@ -127,8 +130,6 @@ public class Exam
             callBlock = 1;
             incrementM1();
         }
-        
-        System.out.println(callBlock);
 
        
         
@@ -152,7 +153,7 @@ public class Exam
                String x = file.getAbsolutePath();
                 if(x.toLowerCase().endsWith(".txt"))
                 {
-                    System.out.println(incrementM1());
+                    incrementM1();
                     Results.submit(() -> new PathResultMin(Paths.get(x)));
                 }else if(file.isDirectory())
                 {
@@ -169,13 +170,26 @@ public class Exam
         // this will be empty, and thus cause no chaos
        
         // if this is first call, return the list of futures
+        
+        
+    
         if(callBlock == 1)
         {
-            // Start the creation
+            try{
+                // Start the creation
             System.out.println("asd");
-            add();
-            System.out.println("asd");
+            Serv.execute(() -> add());
+            
+                try {
+                    m1Latch.await();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+                }
             return m1List;
+            }finally{
+                Serv.shutdown();
+            }
+            
         }
         else
         {
