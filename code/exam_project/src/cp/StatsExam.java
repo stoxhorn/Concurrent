@@ -37,8 +37,113 @@ public class StatsExam implements Stats
     private ArrayList<statNode> paths = new ArrayList();
     
     
+    public void add(Path dir)
+    {
+
+    }
+    
+    
+    private void calcOcc()
+    {
+        // for each occureance:
+        for(int occ : occured)
+        {
+            
+            int index = occured.indexOf(occ);
+            
+            // If first occurance:        
+            if(mostFrequent == -1)
+            {
+                mostFrequent = index;
+            }
+            // if previes freq is lower than the freq of occ
+            else if(occ > occurences.get(mostFrequent))
+            {
+                mostFrequent = index;
+            }
+            // if first occurance
+            if(leastFrequent == -1)
+            {
+                leastFrequent = index;
+            }
+            // if previous freq is hiehger
+            else if(occ < occurences.get(leastFrequent))
+            {
+                mostFrequent = index;
+            }
+        }
+            
+    
+    }
+        
+    
+    
+    
+    private void setOcc(ArrayList<ArrayList<Integer>> Occurences)
+    {
+        occurences = Occurences.get(0);
+        occured = Occurences.get(1);
+        
+    }
+    
+    public void calcOcc(IntStream Stream)
+    {
+        
+        Stream.forEach( x ->
+                setOcc(addOneOcc(x)));
+        
+    }
+        
+    
+    private ArrayList<ArrayList<Integer>> addOneOcc(Integer x)
+    {
+        ArrayList<Integer> occurences = new ArrayList<>();
+        ArrayList<Integer> occured = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> returnArr3 = new ArrayList<>();
+        returnArr3.add(occurences);
+        returnArr3.add(occured);
+        
+        
+        // check if occured once
+        boolean check = false;
+        int index = 0;
+        for(Integer y : occured)
+        {
+            
+            if(y.equals(x))
+            {
+                // if x has occured once do:
+                index = occured.indexOf(y);
+                // has appeared
+                check = true;
+            }
+        }
+        if(check)
+        {
+                occurences.add(index, occurences.get(index)+1);
+        }else
+        {
+            // if has not ocured
+            occured.add(x);
+            occurences.add(1);
+        }
+        return returnArr3;
+    }
+    
+    
     
     private IntStream Stream;
+    
+    private IntStream getStream()
+    {
+        IntStream tmp = Stream;
+        return tmp;
+    }
+    
+    private void closeStream()
+    {
+        Stream.close();
+    }
     
     private void addStream(Path path)
     {
@@ -67,59 +172,7 @@ public class StatsExam implements Stats
             Stream = resultBuilder.build();
     }
     
-    private void addOcc()
-    {
-        Stream.forEach( x -> 
-                addOneOcc(x));
-    }
     
-    private void addOneOcc(Integer x)
-    {
-        // check if occured once
-        boolean check = false;
-        int index = 0;
-        for(Integer y : occured)
-        {
-            
-            if(y.equals(x))
-            {
-                // if x has occured once do:
-                index = occured.indexOf(y);
-                // has appeared
-                check = true;
-            }
-        }
-        if(check)
-        {
-            int occ = occurences.get(index)+1;
-            if(mostFrequent == -1)
-            {
-                mostFrequent = index;
-            }
-            else if(occ > occurences.get(mostFrequent))
-            {
-                mostFrequent = index;
-            }
-            if(leastFrequent == -1)
-            {
-                leastFrequent = index;
-            }
-            else if(occ < occurences.get(leastFrequent))
-            {
-                mostFrequent = index;
-            }
-            occurences.add(index, occurences.get(index)+1);
-        }else
-        {
-            // if has not ocured
-            occured.add(x);
-            occurences.add(1);
-        }
-        
-        
-        
-        
-    }
     
     
     public void printOcc()
@@ -146,14 +199,7 @@ public class StatsExam implements Stats
     
     
 
-    public void add(Path dir)
-    {
-        addStream(dir);
-        addOcc();
-        Stream.close();
-        addSum(dir);
-
-    }
+    
     
     
     @Override
@@ -213,32 +259,9 @@ public class StatsExam implements Stats
         }
     }
 
-    private void addSum(Path dir)
+    private void setSum(Path dir)
     {
-        addStream(dir);
         
-        int newSum = Stream.sum();
-        
-        Stream.close();
-        
-        statNode newNdoe = new statNode(newSum, dir, -1);
-        
-        ArrayList<statNode> tmp = new ArrayList<>();
-        
-        int y = 0;
-        for(statNode x : paths)
-        {
-            if(newNdoe.getSum() < x.getSum())
-            {
-                newNdoe.setInd(y);
-                tmp.add(newNdoe);
-                y++;
-            }
-            x.setInd(y);
-            y++;
-            tmp.add(x);
-            
-        }
         
         
     }
