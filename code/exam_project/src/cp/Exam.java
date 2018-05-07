@@ -10,8 +10,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -27,9 +29,11 @@ public class Exam
 {
     // an executor that is used for all the curent methods
     // as only one executor should be running at a time
-    static ScheduledThreadPoolExecutor Serv = new ScheduledThreadPoolExecutor(3);//Runtime.getRuntime().availableProcessors()
+    static ForkJoinPool Serv = new ForkJoinPool();
     
-    static ConcurrentLinkedDeque<FutureTask<Result>> m1Fut = new ConcurrentLinkedDeque<>();
+    static ExecutorCompletionService Results = new ExecutorCompletionService(Serv);
+    
+    static ConcurrentLinkedDeque<FutureTask<Callable<Result>>> m1Fut = new ConcurrentLinkedDeque<>();
     
     static LinkedList<Result> m1List = new LinkedList<>();
     
@@ -57,31 +61,24 @@ public class Exam
     
     public static void add()
     {
-        
-        for(Future<Result> x : m1Fut)
+        Future<Result> tmp = Results.poll();
+        while((Serv.hasQueuedSubmissions()) || tmp != null || Serv.getActiveThreadCount() > 0)
         {
-            x = m1Fut.pollFirst();
-            Serv.execute(x.get());
-            
-            Serv.execute(() -> {
-                try {
-                    m1List.add(x.get());
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            });
-        }
-        while(m1Fut.size() > m1List.size())
-        {
-            Future<Result> x = m1Fut.pollLast();
+            if(tmp == null)
+            {
+                
+            }
+            else{
             try {
-                m1List.add(x.get());
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+                m1List.add(tmp.get());
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
+                
+            }
+            tmp = Results.poll();
         }
+        
     }
     
     
@@ -114,19 +111,20 @@ public class Exam
     * @return a list of results ({@link Result}), each giving the lowest number found in a file
     */
     public static List< Result > m1( Path dir )
-    {
-       
-         // Creates the list to be returned
-        List<Result> returnList = new LinkedList();            
-       
+    {      
         // Integer to keep track of call number
         int callBlock = incrementM1();
        
         // In case the given path is a txt file and not a directory:
         if(dir.toString().toLowerCase().endsWith(".txt"))
         {
+            
             // Adds a PathResultMin for the given file to the future list
-            m1Fut.add(() -> {return new PathResultMin(dir));;
+            Callable tmp = (() ->
+            {
+                return new PathResultMin(dir);
+            });
+            Results.submit(tmp);
         }  
        
         // In case the given path is a directory and not a txt file:
@@ -156,13 +154,12 @@ public class Exam
         {
             // Start the creation
             add();
-            while(Serv.getQueue().size() > 0)
-            {
+            try{
+                return m1List;
+            }finally{
+                Serv.shutdown();
             }
-            while(m1List.size() < m1Fut.size())
-            {
-            }
-            return m1List;
+            
         }
         else
         {
