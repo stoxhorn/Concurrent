@@ -28,6 +28,10 @@ public class statNode {
         
         
     }
+
+    statNode() {
+        
+    }
     
     public int getSum()
     {
@@ -53,6 +57,19 @@ public class statNode {
         index = newIndex;
     }
     
+    public String toString()
+    {
+        String ret = "";
+        ret += index;
+        ret += " - index | ";
+        ret += sum;
+        ret += " is the sum \n";
+        ret += dir;
+        ret += "\n";
+        
+        return ret;
+        
+    }
     
     
     

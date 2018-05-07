@@ -5,14 +5,10 @@
  */
 package cp;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  *
@@ -34,8 +30,14 @@ public class StatsExam implements Stats
     
     private ArrayList<Integer> occured = new ArrayList();
     
-    private ArrayList<statNode> paths = new ArrayList();
+    private List<statNode> paths = new ArrayList();
     
+    public StatsExam()
+    {
+        
+    }
+            
+            
     
     public void add(Path dir)
     {
@@ -43,7 +45,7 @@ public class StatsExam implements Stats
     }
     
     
-    private void calcOcc()
+    public void calcOcc()
     {
         // for each occureance:
         for(int occ : occured)
@@ -86,6 +88,9 @@ public class StatsExam implements Stats
         
     }
     
+    
+    
+    // The stream will bne needed for each node, as i need to go through each number from the path
     public void calcOcc(IntStream Stream)
     {
         
@@ -97,11 +102,10 @@ public class StatsExam implements Stats
     
     private ArrayList<ArrayList<Integer>> addOneOcc(Integer x)
     {
-        ArrayList<Integer> occurences = new ArrayList<>();
-        ArrayList<Integer> occured = new ArrayList<>();
         ArrayList<ArrayList<Integer>> returnArr3 = new ArrayList<>();
         returnArr3.add(occurences);
         returnArr3.add(occured);
+        
         
         
         // check if occured once
@@ -131,52 +135,28 @@ public class StatsExam implements Stats
     }
     
     
-    
-    private IntStream Stream;
-    
-    private IntStream getStream()
+    public void setPaths(List<statNode> list)
     {
-        IntStream tmp = Stream;
-        return tmp;
+        paths = list;
+        printOcc();
+        System.out.println(this.mostFrequent());
+        System.out.println(this.leastFrequent());
+        System.out.println(this.paths);
     }
     
-    private void closeStream()
+    public String toString()
     {
-        Stream.close();
-    }
-    
-    private void addStream(Path path)
-    {
-        // creating the Builder to build the IntStream that is created after
-        IntStream.Builder resultBuilder = IntStream.builder();
-        
-        // The try with resources block for getting the stream of the file, in case the file does not exist an error will be printed, and -1 will be returned
-        // -1 cannot be a number in the given numbers, and as such represents a fail
-        // Fairly sure the print statement is redundant, as this method won't even get called, if a false directory is used, however keeping it is just nice in case shit goes south.
-            try
-            (
-                Stream<String> s = Files.lines( path )
-            ){
-                // Calls the method addlist on each line of the file, using the builder from earlier
-                // only one line is given, however, it's easy to read and understand
-                // Also allows for potential useage on multple lines in case an update is needed
-                s.forEach( x -> 
-                        addList(x, resultBuilder));
-                
-            }
-            catch( IOException e )
-            {
-                System.out.println(e); 
-            }
+        String ret = "";
+        for(statNode x: paths)
+        {
             
-            Stream = resultBuilder.build();
+        }
     }
-    
-    
     
     
     public void printOcc()
     {
+        System.out.println("aouihjsdojuikhnas");
         
         int index = 0;
         for(int x : occured)
@@ -239,25 +219,7 @@ public class StatsExam implements Stats
         return tmp;
     }
     
-    /**
-     * Adds a string of numbers, seperated by a "," to an Intstream, and adds it to the given Builder
-     * 
-     * @param x             A string conatining numbers seperated by ","
-     * @param resultBuilder An IntStream.Builder, that needs be build
-     */
-    private static void addList(String x, IntStream.Builder resultBuilder)
-    {
-        
-        // Turning the String into a list of Int's
-        String[] tmp = x.split(",");
-        int[] returnList = Arrays.stream(tmp).mapToInt(Integer::parseInt).toArray();
-        
-        // Adding the int[] to the builder
-        for(int z : returnList)
-        {
-            resultBuilder.add(z);
-        }
-    }
+    
 
     private void setSum(Path dir)
     {

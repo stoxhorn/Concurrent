@@ -50,6 +50,8 @@ public class Exam
     
     static Result m2Return = new PathResultSum(false);
     
+    static ConcurrentLinkedDeque<statNode> m3Temp = new ConcurrentLinkedDeque<>();
+    
     static AtomicInteger m1Int = new AtomicInteger();
     
     static AtomicInteger m2Int = new AtomicInteger();
@@ -58,7 +60,10 @@ public class Exam
     
     static CountDownLatch m2Latch = new CountDownLatch(1);
     
+    static CountDownLatch m3Latch = new CountDownLatch(1);
+    
     static StatsExam locals = new StatsExam();
+    
     
     
     
@@ -305,8 +310,129 @@ public class Exam
         return null;
     }
 
+    
+    // This gets the statNodes for each directory, along with the proper sum accompanied
+    // from here on i only need to add them to StatsExam
+    private static void add3One()
+    {
+        
+
+        Future<statNode> tmp;
+        try {
+            tmp = Results3.take();
+            if(tmp == null)
+            {
+            }
+            else
+            {
+                
+                try {
+                    m3Temp.add(tmp.get());
+                    System.out.println(m3Temp.size());
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            
+        } catch (NullPointerException ex) {
+            Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    
+    
     public static void add3()
     {
+        while(m3Temp.size() != 143)
+        {
+            Serv.execute(()-> add3One());
+        }
+        
+        ArrayList<statNode> temp = new ArrayList<>();
+        temp.addAll(m3Temp);
+        temp = addNodes(temp);
+        locals.setPaths(temp);
+        
+    }
+    
+    public static ArrayList<statNode> addNodes(List<statNode> list)
+    {
+        
+        // Adds all the relevant occurences and so one, now i just need to sort in order of sum
+        for(statNode x :list)
+        {
+            IntStream strim = addStream.addStream(x.getPath());
+            locals.calcOcc(strim);
+            locals.calcOcc();
+            strim.close();
+        }
+        
+        return addNode(list);
+        
+    }
+    
+    public static ArrayList<statNode> addNode(List<statNode> old)
+    {
+        ArrayList<statNode> newb = new ArrayList<statNode>();
+        ArrayList<Integer> mid = new ArrayList<Integer>();
+
+        statNode min = null;
+        
+        int index = 0;
+        
+        for(statNode x : old)
+        {
+            // the index of x is alread in the list, don't store// 
+            if(!contains(mid, x.getInd()))
+            {
+                min = x;
+                min.setInd(x.getInd());
+                System.out.println(min.getInd());
+            }
+                
+            // the lowest y, below x
+            for(statNode y : old)
+            {
+                // if min.sum is larger then the next y
+                if(min.getSum() > y.getSum()) 
+                {
+                    // the index of y is alread in the list, don' store
+                    if(!contains(mid, y.getInd()))
+                    {
+                        // set min to be y
+                        min = y;
+                        min.setInd(y.getInd());   
+                    }
+                }
+            }
+            // Store the index
+            //System.out.println(min.getInd());
+            mid.add(min.getInd());
+            newb.add(min);
+        }
+
+        
+        
+        
+        return newb;
+    }
+    
+    private static boolean contains(List<Integer> list, int x)
+    {
+        for(int z : list)
+        {
+            if(x == z)
+            {
+                return true;
+            }
+        }
+        
+        return false;
         
     }
     
@@ -322,43 +448,55 @@ public class Exam
     {
         int local = incrementM3();
         File[] dirFiles = dir.toFile().listFiles();
-
-       for(File x : dirFiles)
-       {
-        String tmp = x.getAbsolutePath();
-        if(tmp.toLowerCase().endsWith(".txt") || tmp.toLowerCase().endsWith(".dat"))
-        {
-            locals.add(Paths.get(tmp));
-        }
-        else if(x.isDirectory())
-        {
-            m3(Paths.get(tmp));
-        }   
-       }
         
-    
+        if(local == 1)
+        {
+            Serv = new ForkJoinPool();
+            Results3 = new ExecutorCompletionService(Serv);
+        }
+        
+        for(File x : dirFiles)
+        {
+            String tmp = x.getAbsolutePath();
+            if(tmp.toLowerCase().endsWith(".txt") || tmp.toLowerCase().endsWith(".dat"))
+            {
+                // I shubmit a result to the completion service
+                Results3.submit(() -> {
+                    return getNode(Paths.get(tmp));
+                });
+            }
+            else if(x.isDirectory())
+            {
+                m3(Paths.get(tmp));
+            }   
+        }
+        if(local == 1)
+        {
+            // I start the method that gets the current futures
+            Serv.execute(() -> add3());
+            try {
+                m3Latch.await();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return locals; 
+        }
             
-        return locals;
+        return null;
     }
     
     // each time i meet a txdt/ dat file i need to run following sequence:
     /*
-    
-        Get a stream
-        Calculate the a sum
-        sum takes a path and a new sum
-        takes a list of statNodes and build upon this
-
-        Calls method addStream
-                    needs changing:
-                        neds to return the stream, and to be a part of exam
-    
+        with only a list of paths, i am now able to create a list of statNodes without proper indexing
+        this can be achieved in it's local methods using calcOcc on for each path traversed
         
-        
+    idea:
+        i make a fuckton of statNodes, and at the end i add them to statsExam
+    
     */
     
-    // split up into two, so one method returns a list of nodes, and another reutns one node only
-    private static List<statNode> calcSum(List<Path> dirs)
+    // Takes a list of directories, and spits out a list of gamenodes without proper indexing
+    private static List<statNode> getNodes(List<Path> dirs)
     {
         ArrayList<statNode> tmp = new ArrayList<>();
         for(Path x : dirs)
@@ -384,7 +522,7 @@ public class Exam
     private static statNode getNode(Path dir)
     {
         IntStream loco;
-        loco = addStream(dir);
+        loco = addStream.addStream(dir);
         
         int newSum;
         newSum = loco.sum();
@@ -401,57 +539,5 @@ public class Exam
     
     
     
-    // Takes a path and returns an intstream
-    private static IntStream addStream(Path path)
-    {
-        // creating the Builder to build the IntStream that is created after
-        IntStream.Builder resultBuilder = IntStream.builder();
-        
-        // The try with resources block for getting the stream of the file, in case the file does not exist an error will be printed, and -1 will be returned
-        // -1 cannot be a number in the given numbers, and as such represents a fail
-        // Fairly sure the print statement is redundant, as this method won't even get called, if a false directory is used, however keeping it is just nice in case shit goes south.
-            try
-            (
-                Stream<String> s = Files.lines( path )
-            ){
-                // Calls the method addlist on each line of the file, using the builder from earlier
-                // only one line is given, however, it's easy to read and understand
-                // Also allows for potential useage on multple lines in case an update is needed
-                s.forEach( x -> 
-                        addList(x, resultBuilder));
-                
-            }
-            catch( IOException e )
-            {
-                System.out.println(e); 
-            }
-            
-            return resultBuilder.build();
-            
-            
-    }
-    
-    
-    
-    
-    /**
-     * Adds a string of numbers, seperated by a "," to an Intstream, and adds it to the given Builder
-     * 
-     * @param x             A string conatining numbers seperated by ","
-     * @param resultBuilder An IntStream.Builder, that needs be build
-     */
-    private static void addList(String x, IntStream.Builder resultBuilder)
-    {
-        
-        // Turning the String into a list of Int's
-        String[] tmp = x.split(",");
-        int[] returnList = Arrays.stream(tmp).mapToInt(Integer::parseInt).toArray();
-        
-        // Adding the int[] to the builder
-        for(int z : returnList)
-        {
-            resultBuilder.add(z);
-        }
-    }
-    
+   
 }
