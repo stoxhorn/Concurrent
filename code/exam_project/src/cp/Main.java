@@ -70,21 +70,15 @@ public class Main
     public static void main( String[] args )
     {
         
-        
+        /*for(Object x : asd)
+        {
+            System.out.println(x.toString());
+        }*/
         startTime = System.currentTimeMillis();
         List list = Exam.m1(Paths.get(testString));
         endTime = System.currentTimeMillis();
         System.out.println("concurrent: " + (endTime - startTime));
         
-        System.out.println("size() " + list.size());
-        /*int v = 0;
-        for(Object x : list)
-        {
-            v++;
-            System.out.println(v);
-            System.out.println(x.toString());
-            
-        }*/
         
         compare(list);
         
