@@ -36,6 +36,7 @@ public class Main
         
         
         
+        ListIterator<PathResultMin> itr;
         
         int sameResults = 0;
         
@@ -43,7 +44,18 @@ public class Main
         {
             itr = list.listIterator();
 
+            while(itr.hasNext())
+            {
+                PathResultMin z = itr.next();
 
+
+                if(equals(v, z))
+                {
+                    
+                    sameResults ++;
+            
+                }
+            }
             
             
         }        
@@ -58,20 +70,17 @@ public class Main
     public static void main( String[] args )
     {
         
-        
+        /*for(Object x : asd)
+        {
+            System.out.println(x.toString());
+        }*/
         startTime = System.currentTimeMillis();
         List list = Exam.m1(Paths.get(testString));
         endTime = System.currentTimeMillis();
         System.out.println("concurrent: " + (endTime - startTime));
-        System.out.println("size" + list.size());
+        System.out.println(list.size());
         
-        int v = 0;
-        for(Object x : list)
-        {
-            System.out.println(v++);
-            System.out.println(x.toString());
-        }
-        //compare(list);
+        compare(list);
         
 
 
