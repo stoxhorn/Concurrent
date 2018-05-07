@@ -39,7 +39,7 @@ public class Exam
     
     static AtomicInteger m1Int = new AtomicInteger();
     
-    static CountDownLatch m1Latch = new CountDownLatch(0);
+    static CountDownLatch m1Latch = new CountDownLatch(1);
     
     
     
@@ -57,6 +57,36 @@ public class Exam
         return x;
     }
     
+    public static void addOne()
+    {
+        try {
+
+            List<Result> tmp;
+            try {
+
+                tmp = Results.take().get();
+
+                if(tmp == null)
+                {
+                    System.out.println(m1List.size());
+                }else
+                {
+                    
+                    m1List.addAll(tmp);
+                
+
+                }
+
+
+            } catch (ExecutionException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    }
+    
     public static void add()
     {
         
@@ -64,39 +94,15 @@ public class Exam
         int v = 0;
         while(true)
         {
-            
-            try {
-                
-                List<Result> tmp;
-                try {
-                    
-                    tmp = Results.take().get();
-                    
-                    if(tmp == null)
-                    {
-                        System.out.println(m1List.size());
-                    }else
-                    {
-                        v++;
-                        m1List.addAll(tmp);
-                        if(v == m1Int.get()-1)
-                        {
-                            break;
-                        }
-                        
-                    }
-                    
-                    
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            v++;
+            Serv.execute(() -> addOne());
+            System.out.println(m1List.size());
+            if(v == m1Int.get())
+            {
+                System.out.println("size: " + m1List.size());
+                m1Latch.countDown();
             }
-
         }
-        Serv.shutdown();
     }
     
     
