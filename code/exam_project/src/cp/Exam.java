@@ -49,7 +49,7 @@ public class Exam
     
     static CountDownLatch m2Latch = new CountDownLatch(1);
     
-    
+    static StatsExam locals = new StatsExam();
     
     
     
