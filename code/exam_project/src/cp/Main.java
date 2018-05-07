@@ -71,8 +71,7 @@ public class Main
     {
         
         
-        // Tester for m1
-        startTime = System.currentTimeMillis();
+        /*startTime = System.currentTimeMillis();
         List list = Exam.m1(Paths.get(testString));
         
         endTime = System.currentTimeMillis();
@@ -85,16 +84,13 @@ public class Main
             System.out.println(x.toString());
         }
         
-        compare(list);
-        /*
-        
-        // Tester for m2
+        compare(list);*/
         startTime = System.currentTimeMillis();
-        Result asd = Exam.m2(Paths.get(testString), 2);
-        
+        Result res = Exam.m2(Paths.get(testString), 1000);
         endTime = System.currentTimeMillis();
         System.out.println("concurrent: " + (endTime - startTime));
-        System.out.println(asd);*/
+        
+        System.out.println(res);
         
 
 
@@ -127,7 +123,7 @@ public class Main
        else if(dir.toString().toLowerCase().endsWith(".txt"))
        {
            // Adds a PathResultMin for the given file to the lsit
-           returnList.add(new PathResultMin(dir, Exam.getNumber(dir)));
+           returnList.add(new PathResultMin(dir));
        } 
 
        // Returns the build List

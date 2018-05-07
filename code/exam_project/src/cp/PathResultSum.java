@@ -29,6 +29,7 @@ public class PathResultSum implements Result {
     
     // The sum of the line specified by lineNumber
     private final int sum;
+    private boolean bool;
     
     /**
      * Getter for the path
@@ -78,13 +79,14 @@ public class PathResultSum implements Result {
      /**
      * A second constructor for creating an empty result
      * 
-     * @param newPath the path leading to the .txt file
+     * @param bool
      */
     public PathResultSum(boolean bool)
     {
         path = Paths.get("c:\\");
         sum = -1;
         lineNumber = -1; 
+        this.bool = bool;
     }
     
     

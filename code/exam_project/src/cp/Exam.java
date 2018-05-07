@@ -32,25 +32,25 @@ public class Exam
     // as only one executor should be running at a time
     static ForkJoinPool Serv = new ForkJoinPool();
     
-    static ExecutorCompletionService Results = new ExecutorCompletionService(Serv);
+    static ExecutorCompletionService Results1 = new ExecutorCompletionService(Serv);
+    
+    static ExecutorCompletionService Results2 = new ExecutorCompletionService(Serv);
     
     static ConcurrentLinkedDeque<FutureTask<Callable<Result>>> m1Fut = new ConcurrentLinkedDeque<>();
     
-    static LinkedList<Result> m1List = new LinkedList<>();
+    static LinkedList<Result> m1Return = new LinkedList<>();
+    
+    static Result m2Return = new PathResultSum(false);
     
     static AtomicInteger m1Int = new AtomicInteger();
     
-    static CountDownLatch m1Latch = new CountDownLatch(0);
+    static AtomicInteger m2Int = new AtomicInteger();
+    
+    static CountDownLatch m2Latch = new CountDownLatch(1);
     
     
     
     
-    
-    private static int decrementM1()
-    {
-        int x = m1Int.decrementAndGet();
-        return x;
-    }
     
     private static  int incrementM1()
     {
@@ -58,11 +58,18 @@ public class Exam
         return x;
     }
     
+    private static  int incrementM2()
+    {
+        int x = m2Int.incrementAndGet();
+        return x;
+    }
+    
+    
 
     
     public static void add()
     {
-        Future<Result> tmp = Results.poll();
+        Future<Result> tmp = Results1.poll();
         while((Serv.hasQueuedSubmissions()) || tmp != null || Serv.getActiveThreadCount() > 0)
         {
             if(tmp == null)
@@ -70,13 +77,13 @@ public class Exam
             }
             else{
             try {
-                m1List.add(tmp.get());
+                m1Return.add(tmp.get());
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
             }
                 
             }
-            tmp = Results.poll();
+            tmp = Results1.poll();
         }
         
     }
@@ -121,10 +128,10 @@ public class Exam
             
             // Adds a PathResultMin for the given file to the future list
             
-            Results.submit(() ->
+            Results1.submit(() ->
             {
                 return new PathResultMin(dir);
-            });;
+            });
         }  
        
         // In case the given path is a directory and not a txt file:
@@ -152,7 +159,7 @@ public class Exam
             // Start the creation
             add();
             try{
-                return m1List;
+                return m1Return;
             }finally{
                 Serv.shutdown();
             }
@@ -165,7 +172,37 @@ public class Exam
         return null;
     }
 
+    public static void add2One()
+    {
+        Future<Result> tmp = Results2.poll();
+        if(tmp == null)
+            {
+            }
+            else{
+            try {
+
+                if(tmp.get().number() != -1)
+                {
+                    m2Return = tmp.get();
+                    m2Latch.countDown();
+                    return;
+                }
+            } catch (InterruptedException | ExecutionException | NullPointerException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+                
+            }
+    }
     
+    public static void add2()
+    {
+        
+        
+        while((Serv.hasQueuedSubmissions()) || Serv.getActiveThreadCount() > 0)
+        {
+            Serv.execute(()-> add2One());
+        }
+    }
     /**
      * This method recursively visits a directory for text files with suffix
      * ".dat" (notice that it is different than the one before)
@@ -194,7 +231,9 @@ public class Exam
      */
     public static Result m2( Path dir, int min )
     {       
-        Result tmp = new PathResultSum(false); 
+        
+        int local = incrementM2();
+        
         // In case the given path is a directory and not a txt file:
         if (Files.isDirectory(dir))
         {    
@@ -204,11 +243,7 @@ public class Exam
             // Loops through each file, and calls this method upon the loop
             for(File file : dirFiles)
             {
-                int i = m2(file.toPath(), min).number();
-                if(i > -1)
-                {
-                    return m2(file.toPath(), min);
-                }
+                m2(file.toPath(), min);
             }
         }
 
@@ -218,10 +253,31 @@ public class Exam
             int tmpSum = new PathResultSum(dir, min).number();
             if(tmpSum > -1)
             {
-                return new PathResultSum(dir, min);
+                Results2.submit(() ->
+                {
+                    Result tmp = new PathResultSum(dir, min);
+                    if(tmp.number() != -1)
+                    {
+                        m2Return = tmp;
+                        m2Latch.countDown();
+                        return null;
+                    }
+                    return new PathResultSum(dir, min);
+                });
+                return null;
             }
         }
-        return tmp; 
+        if(local == 1)
+        {
+            Serv.execute(() -> add2());
+            try {
+                m2Latch.await();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return m2Return; 
+        }
+        return null;
     }
 
 	
