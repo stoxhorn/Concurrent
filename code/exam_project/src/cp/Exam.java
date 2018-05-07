@@ -1,32 +1,24 @@
 package cp;
 
-import static cp.Main.startTime;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * 
@@ -34,51 +26,58 @@ import java.util.stream.Stream;
  */
 public class Exam
 {
-    // an executor that is used for all the curent methods
-    // as only one executor should be running at a time
+    // ForkjoinPool, used by all methods, 
     static ForkJoinPool Serv;
     
+    // 3 completion Services for the 3 different methods
     static ExecutorCompletionService Results1;
-    
+        
     static ExecutorCompletionService Results2;
     
     static ExecutorCompletionService Results3;
     
-    static ConcurrentLinkedDeque<FutureTask<Callable<Result>>> m1Fut = new ConcurrentLinkedDeque<>();
-    
+    // The list added to from method m1, and used as return
     static LinkedList<Result> m1Return = new LinkedList<>();
     
+    // The object added to from method m1, and used as return
     static Result m2Return = new PathResultSum(false);
     
+    // Used to add nodes to, for later usage when adding to the StatsExam
     static ConcurrentLinkedDeque<statNode> m3Temp = new ConcurrentLinkedDeque<>();
     
+    // Atmoci integers used to make sure the first call returns the right return
     static AtomicInteger m1Int = new AtomicInteger();
     
     static AtomicInteger m2Int = new AtomicInteger();
     
     static AtomicInteger m3Int = new AtomicInteger();
     
+    
+    // Latches used to have the first method wait for the result 
     static CountDownLatch m2Latch = new CountDownLatch(1);
     
     static CountDownLatch m3Latch = new CountDownLatch(1);
     
+    // The statsExam object used to retunr in the m3 method
     static StatsExam locals = new StatsExam();
     
     
     
-    
+    // Used to differ between depth calls in method one
     private static  int incrementM1()
     {
         int x = m1Int.incrementAndGet();
         return x;
     }
     
+    // Used to differ between depth calls in method two
     private static  int incrementM2()
     {
         int x = m2Int.incrementAndGet();
         return x;
     }
     
+    // Used to differ between depth calls in method three
     private static  int incrementM3()
     {
         int x = m3Int.incrementAndGet();
@@ -87,11 +86,11 @@ public class Exam
     
     
 
-    
+    // The final method that sequantially waits for the results of Result1 to finish
     public static void add()
     {
         Future<Result> tmp = Results1.poll();
-        while((Serv.hasQueuedSubmissions()) || tmp != null || Serv.getActiveThreadCount() > 0)
+        while((Serv.hasQueuedSubmissions()) || tmp != null || Serv.getActiveThreadCount() > 0 )
         {
             if(tmp == null)
             {
@@ -143,31 +142,26 @@ public class Exam
         // Integer to keep track of call number
         int callBlock = incrementM1();
        
+        // initializing the completionService and the executor
         if(callBlock == 1)
         {
             Serv = new ForkJoinPool();
             Results1 = new ExecutorCompletionService(Serv);
         }
         
-        // In case the given path is a txt file and not a directory:
+        // Submits a future result to the completionist service
         if(dir.toString().toLowerCase().endsWith(".txt"))
         {
-            
-            // Adds a PathResultMin for the given file to the future list
-            
             Results1.submit(() ->
             {
                 return new PathResultMin(dir);
             });
         }  
        
-        // In case the given path is a directory and not a txt file:
+        // if the files is a directory, the method will make recusrive calls, to make sure every result has been submitted
         else if (Files.isDirectory(dir))
         {    
-            // Creates an array of Files, representing the files in the given irectory
             File[] dirFiles = dir.toFile().listFiles();
-
-            // Loops through each file, and calls this method upon the loop
             for(File file : dirFiles)
             {
                m1(file.toPath());
@@ -176,11 +170,7 @@ public class Exam
        
        
 
-        // Returns the build List
-        // If the given path was neither a txt file or directory,
-        // this will be empty, and thus cause no chaos
-       
-        // if this is first call, return the list of futures
+        // The first depth calls the add() method, once it has submitted every future.
         if(callBlock == 1)
         {
             // Start the creation
@@ -192,21 +182,30 @@ public class Exam
             }
             
         }
+        // if not first depth, returns nulil
         else
         {
-            
+            return null;    
         }
-        return null;
+        
     }
 
+    //------------------------------------------------- helper Methods for second method
+    
+    
+    // the call used every loop once, the method wants to calculates it's return
     public static void add2One()
     {
         Future<Result> tmp = Results2.poll();
             
             
             try {
-                if(tmp.get() == null)
+                if(tmp == null)
                 {
+                }
+                else if(tmp.get() == null)
+                {
+                    
                 }
                 else if(tmp.get().number() != -1)
                 {
@@ -219,6 +218,7 @@ public class Exam
                 
     }
     
+    // addition loop
     public static void add2()
     {
         
@@ -257,46 +257,45 @@ public class Exam
     public static Result m2( Path dir, int min )
     {       
         
+        // checker for call depth
         int local = incrementM2();
+        
+        // initializer for first depth
         if(local == 1)
         {
             Serv = new ForkJoinPool();
             Results2 = new ExecutorCompletionService(Serv);
         }
         
-        // In case the given path is a directory and not a txt file:
+        // In case the given path is a directory and not a txt file, makes a recursive call
         if (Files.isDirectory(dir))
         {    
-            // Creates an array of Files, representing the files in the given irectory
             File[] dirFiles = dir.toFile().listFiles();
-
-            // Loops through each file, and calls this method upon the loop
             for(File file : dirFiles)
             {
                 m2(file.toPath(), min);
             }
         }
 
-        // In case the given path is a txt file and not a directory:
+        // In case the given path is a .dat file and not a directory, add to completionservice
         else if(dir.toString().toLowerCase().endsWith(".dat"))
         {
-            int tmpSum = new PathResultSum(dir, min).number();
-            if(tmpSum > -1)
-            {
-                Results2.submit(() ->
+            
+            // will countdown the latch for the second method if the result is above the given parameter
+            Results2.submit(() -> {
+                Result tmp = new PathResultSum(dir, min);
+                if(tmp.number() != -1)
                 {
-                    Result tmp = new PathResultSum(dir, min);
-                    if(tmp.number() != -1)
-                    {
-                        m2Return = tmp;
-                        m2Latch.countDown();
-                        return null;
-                    }
-                    return new PathResultSum(dir, min);
+                    m2Return = tmp;
+                    m2Latch.countDown();
+                    return null;
+                }
+                return new PathResultSum(dir, min);
                 });
                 return null;
-            }
         }
+        
+        // if depth 1 do the return call
         if(local == 1)
         {
             Serv.execute(() -> add2());
@@ -311,25 +310,31 @@ public class Exam
     }
 
     
-    // This gets the statNodes for each directory, along with the proper sum accompanied
-    // from here on i only need to add them to StatsExam
+    // -------------------------------------------------------------- Helper methods for the third method
+    
+    
+    
+    // the method used in the add3() loop, to complete futures
     private static void add3One()
     {
         
-
         Future<statNode> tmp;
         try {
             tmp = Results3.take();
             if(tmp == null)
             {
+                
             }
             else
             {
-                
                 try {
+                    if(tmp.get().getSum() == 1)
+                    {
+                    }
                     m3Temp.add(tmp.get());
-                    System.out.println(m3Temp.size());
+                    
                 } catch (ExecutionException ex) {
+
                     Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -340,19 +345,22 @@ public class Exam
         try {
             
         } catch (NullPointerException ex) {
+            
             Logger.getLogger(Exam.class.getName()).log(Level.SEVERE, null, ex);
         }
         
     }
     
-    
+    // a loop that gives the executor runnables to complete
+    // will when the submission count growth is faster than it can compute, meaning it's waiting for tasks
     public static void add3()
     {
-        while(m3Temp.size() != 143)
+        while(Serv.getQueuedSubmissionCount() <100)
         {
+
             Serv.execute(()-> add3One());
         }
-        
+        m3Latch.countDown();
         ArrayList<statNode> temp = new ArrayList<>();
         temp.addAll(m3Temp);
         temp = addNodes(temp);
@@ -392,7 +400,6 @@ public class Exam
             {
                 min = x;
                 min.setInd(x.getInd());
-                System.out.println(min.getInd());
             }
                 
             // the lowest y, below x
