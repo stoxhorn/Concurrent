@@ -1,5 +1,6 @@
 package cp;
 
+import static cp.Main.startTime;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,7 +67,6 @@ public class Exam
         {
             if(tmp == null)
             {
-                
             }
             else{
             try {
@@ -120,11 +120,11 @@ public class Exam
         {
             
             // Adds a PathResultMin for the given file to the future list
-            Callable tmp = (() ->
+            
+            Results.submit(() ->
             {
                 return new PathResultMin(dir);
-            });
-            Results.submit(tmp);
+            });;
         }  
        
         // In case the given path is a directory and not a txt file:
@@ -136,10 +136,7 @@ public class Exam
             // Loops through each file, and calls this method upon the loop
             for(File file : dirFiles)
             {
-               incrementM1();
-               // add to files 
                m1(file.toPath());
-            
             }
         }
        

@@ -73,6 +73,7 @@ public class Main
         
         startTime = System.currentTimeMillis();
         List list = Exam.m1(Paths.get(testString));
+        
         endTime = System.currentTimeMillis();
         System.out.println("concurrent: " + (endTime - startTime));
         
