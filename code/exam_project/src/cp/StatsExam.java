@@ -5,33 +5,242 @@
  */
 package cp;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  *
- * @author Stoxhorn
+ * Should take a path, and add the respective stats to the respective objects
+ * 
+ * Need an "adder" for each getter, that uses the txt of the given files
+ * 
+ * Each method uses the currently stored IntStream
+ * 
  */
-public class StatsExam implements Stats{
+public class StatsExam implements Stats
+{
+    //contains the index of most frequent number 
+    int mostFrequent = -1;
+    
+    int leastFrequent = -1;
+    
+    private ArrayList<Integer> occurences = new ArrayList();
+    
+    private ArrayList<Integer> occured = new ArrayList();
+    
+    private ArrayList<statNode> paths = new ArrayList();
+    
+    
+    
+    private IntStream Stream;
+    
+    private void addStream(Path path)
+    {
+        // creating the Builder to build the IntStream that is created after
+        IntStream.Builder resultBuilder = IntStream.builder();
+        
+        // The try with resources block for getting the stream of the file, in case the file does not exist an error will be printed, and -1 will be returned
+        // -1 cannot be a number in the given numbers, and as such represents a fail
+        // Fairly sure the print statement is redundant, as this method won't even get called, if a false directory is used, however keeping it is just nice in case shit goes south.
+            try
+            (
+                Stream<String> s = Files.lines( path )
+            ){
+                // Calls the method addlist on each line of the file, using the builder from earlier
+                // only one line is given, however, it's easy to read and understand
+                // Also allows for potential useage on multple lines in case an update is needed
+                s.forEach( x -> 
+                        addList(x, resultBuilder));
+                
+            }
+            catch( IOException e )
+            {
+                System.out.println(e); 
+            }
+            
+            Stream = resultBuilder.build();
+    }
+    
+    private void addOcc()
+    {
+        Stream.forEach( x -> 
+                addOneOcc(x));
+    }
+    
+    private void addOneOcc(Integer x)
+    {
+        // check if occured once
+        boolean check = false;
+        int index = 0;
+        for(Integer y : occured)
+        {
+            
+            if(y.equals(x))
+            {
+                // if x has occured once do:
+                index = occured.indexOf(y);
+                // has appeared
+                check = true;
+            }
+        }
+        if(check)
+        {
+            int occ = occurences.get(index)+1;
+            if(mostFrequent == -1)
+            {
+                mostFrequent = index;
+            }
+            else if(occ > occurences.get(mostFrequent))
+            {
+                mostFrequent = index;
+            }
+            if(leastFrequent == -1)
+            {
+                leastFrequent = index;
+            }
+            else if(occ < occurences.get(leastFrequent))
+            {
+                mostFrequent = index;
+            }
+            occurences.add(index, occurences.get(index)+1);
+        }else
+        {
+            // if has not ocured
+            occured.add(x);
+            occurences.add(1);
+        }
+        
+        
+        
+        
+    }
+    
+    
+    public void printOcc()
+    {
+        
+        int index = 0;
+        for(int x : occured)
+        {
+            index = occured.indexOf(x);
+            int result = occurences.get(index);
+            
+            if(result == 0)
+            {
+                
+            }else
+            {
+                System.out.println("the nubmer: " + x + " had " + result + " occurences");
+            }
+        }
+        
+        System.out.println("most Frequent: " + occured.get(mostFrequent) + " and it's occurences " + occurences.get(mostFrequent));
+        System.out.println("least Frequent: " + occured.get(leastFrequent) + " and it's occurences " + occurences.get(leastFrequent));
+    }
+    
+    
 
+    public void add(Path dir)
+    {
+        addStream(dir);
+        addOcc();
+        Stream.close();
+        addSum(dir);
+
+    }
+    
+    
     @Override
     public int occurrences(int number) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        int y = 0;
+        for(int x : occured)
+        {
+            if(x == number)
+            {
+                return occurences.get(y);
+            }
+            y++;
+        }
+        return 0;
     }
 
     @Override
     public int mostFrequent() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        int tmp = mostFrequent;
+        return tmp;
     }
 
     @Override
     public int leastFrequent() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        int tmp = mostFrequent;
+        return tmp;
     }
 
     @Override
     public List<Path> byTotals() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        ArrayList<Path> tmp = new ArrayList();
+        for(statNode x : paths)
+        {
+            tmp.add(x.getPath());
+        }
+        
+        return tmp;
+    }
+    
+    /**
+     * Adds a string of numbers, seperated by a "," to an Intstream, and adds it to the given Builder
+     * 
+     * @param x             A string conatining numbers seperated by ","
+     * @param resultBuilder An IntStream.Builder, that needs be build
+     */
+    private static void addList(String x, IntStream.Builder resultBuilder)
+    {
+        
+        // Turning the String into a list of Int's
+        String[] tmp = x.split(",");
+        int[] returnList = Arrays.stream(tmp).mapToInt(Integer::parseInt).toArray();
+        
+        // Adding the int[] to the builder
+        for(int z : returnList)
+        {
+            resultBuilder.add(z);
+        }
+    }
+
+    private void addSum(Path dir)
+    {
+        addStream(dir);
+        
+        int newSum = Stream.sum();
+        
+        Stream.close();
+        
+        statNode newNdoe = new statNode(newSum, dir, -1);
+        
+        ArrayList<statNode> tmp = new ArrayList<>();
+        
+        int y = 0;
+        for(statNode x : paths)
+        {
+            if(newNdoe.getSum() < x.getSum())
+            {
+                newNdoe.setInd(y);
+                tmp.add(newNdoe);
+                y++;
+            }
+            x.setInd(y);
+            y++;
+            tmp.add(x);
+            
+        }
+        
+        
     }
     
 }
